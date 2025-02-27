@@ -1,5 +1,7 @@
-// 画像の色調変更を処理する関数
+// 画像の色調変更とモザイク処理を行う関数
 async function processSingleImage(a1Image, a2Image) {
+    const mosaicSize = 16; // モザイクのサイズ（16x16のブロック）
+
     // a1の画像をCanvasに描画
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -20,86 +22,52 @@ async function processSingleImage(a1Image, a2Image) {
     const a1Pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const a2Pixels = a2Ctx.getImageData(0, 0, a2Canvas.width, a2Canvas.height);
 
-    // 色調変更の処理 (a1の色をa2の画像に適用)
-    for (let i = 0; i < a1Pixels.data.length; i += 4) {
-        const r = a1Pixels.data[i];     // Red
-        const g = a1Pixels.data[i + 1]; // Green
-        const b = a1Pixels.data[i + 2]; // Blue
-
-        // a2のピクセルデータに色調を適用
-        a2Pixels.data[i] = r;
-        a2Pixels.data[i + 1] = g;
-        a2Pixels.data[i + 2] = b;
-        a2Pixels.data[i + 3] = 255;  // Alpha (不透明)
+    // a1の画像をモザイク風に処理
+    for (let y = 0; y < canvas.height; y += mosaicSize) {
+        for (let x = 0; x < canvas.width; x += mosaicSize) {
+            // モザイクブロック内の平均色を取得
+            const averageColor = getAverageColor(a1Pixels, x, y, mosaicSize, canvas.width);
+            
+            // a2の画像の対応するピクセルを平均色で塗りつぶす
+            for (let dy = 0; dy < mosaicSize && y + dy < a2Canvas.height; dy++) {
+                for (let dx = 0; dx < mosaicSize && x + dx < a2Canvas.width; dx++) {
+                    const idx = ((y + dy) * a2Canvas.width + (x + dx)) * 4;
+                    a2Pixels.data[idx] = averageColor.r;
+                    a2Pixels.data[idx + 1] = averageColor.g;
+                    a2Pixels.data[idx + 2] = averageColor.b;
+                    a2Pixels.data[idx + 3] = 255;  // 不透明
+                }
+            }
+        }
     }
 
     // 色調変更後のa2画像を新しいCanvasに描画
     a2Ctx.putImageData(a2Pixels, 0, 0);
 
-    // 新しく色調を変更した画像を返す
-    const newImage = new Image();
-    newImage.src = a2Canvas.toDataURL(); // 新しい画像のDataURLを返す
-    await newImage.decode();  // 画像が読み込まれるのを待つ
-    return newImage;
+    // 最終的な画像を返す
+    return a2Canvas;
 }
 
-// 画像処理を実行する関数
-async function processImages() {
-    const a1Files = document.getElementById("a1-images").files;
-    const a2File = document.getElementById("a2-image").files[0];
+// ピクセルデータから平均色を計算する関数
+function getAverageColor(pixels, startX, startY, blockSize, width) {
+    let r = 0, g = 0, b = 0;
+    let count = 0;
 
-    if (a1Files.length === 0 || !a2File) {
-        alert("a1とa2の画像を選択してください");
-        return;
+    // モザイクブロック内のピクセルを走査
+    for (let y = startY; y < startY + blockSize && y < width; y++) {
+        for (let x = startX; x < startX + blockSize && x < width; x++) {
+            const idx = (y * width + x) * 4;
+            r += pixels.data[idx];
+            g += pixels.data[idx + 1];
+            b += pixels.data[idx + 2];
+            count++;
+        }
     }
 
-    const a2Image = await loadImage(a2File);
-    const zip = new JSZip();
-    let progress = 0;
-
-    // 進捗バーの初期化
-    const progressBar = document.getElementById("progress-bar");
-    const progressText = document.getElementById("progress-text");
-
-    for (let i = 0; i < a1Files.length; i++) {
-        const a1File = a1Files[i];
-        const a1Image = await loadImage(a1File);
-
-        // a1の画像を処理してa2の画像に色調変更を適用
-        const processedImage = await processSingleImage(a1Image, a2Image);
-
-        // 画像をZIPに追加
-        const imgData = processedImage.src.split(",")[1];
-        zip.file(a1File.name, imgData, { base64: true });
-
-        progress = Math.floor(((i + 1) / a1Files.length) * 100);
-        progressBar.value = progress;
-        progressText.textContent = `${progress}%`;
-    }
-
-    // ダウンロードリンクを作成して強制的にダウンロード
-    const content = await zip.generateAsync({ type: "blob" });
-    const downloadLink = document.createElement("a");
-    downloadLink.href = URL.createObjectURL(content);
-    downloadLink.download = "processed_images.zip";
-    downloadLink.click();  // ダウンロードを強制的に開始
-
-    // 処理完了のアラート
-    alert("処理が完了しました！");
-
-    // ダウンロードリンクを非表示に
-    downloadLink.style.display = "none";
+    // 平均色を計算
+    return {
+        r: Math.floor(r / count),
+        g: Math.floor(g / count),
+        b: Math.floor(b / count)
+    };
 }
-
-// 画像を読み込む関数
-function loadImage(file) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = URL.createObjectURL(file);
-    });
-}
-
-// 画像処理ボタンのクリックイベント
-document.getElementById("process-button").addEventListener("click", processImages);

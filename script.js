@@ -34,8 +34,10 @@ async function processImages(a1Files, a2File) {
     }
 
     // すべての画像処理が完了したら、ZIPを作成
-    const zip = await createZip(processedImages, a1Files);
-    const zipBlob = await zip.generateAsync({ type: "blob" });
+    const zip = new JSZip();
+    const zipBlob = await createZip(zip, processedImages, a1Files);
+
+    // ZIPのBlob URLを作成
     const zipUrl = URL.createObjectURL(zipBlob);
 
     // アラート表示
@@ -66,10 +68,7 @@ async function processSingleImage(a1Image, a2Image) {
 }
 
 // ZIPファイルを作成
-async function createZip(processedImages, a1Files) {
-    const JSZip = window.JSZip;
-    const zip = new JSZip();
-
+async function createZip(zip, processedImages, a1Files) {
     for (let i = 0; i < processedImages.length; i++) {
         const processedImage = processedImages[i];
 
@@ -87,5 +86,5 @@ async function createZip(processedImages, a1Files) {
         zip.file(fileName, base64Data.split(',')[1], { base64: true });
     }
 
-    return zip;
+    return await zip.generateAsync({ type: "blob" });
 }

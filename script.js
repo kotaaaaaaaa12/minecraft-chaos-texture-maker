@@ -1,8 +1,55 @@
+document.getElementById("process-button").addEventListener("click", async function () {
+    const a1Files = document.getElementById("a1-images").files;
+    const a2File = document.getElementById("a2-image").files[0];
+
+    if (!a2File) {
+        alert("a2画像を選択してください。");
+        return;
+    }
+
+    if (a1Files.length === 0) {
+        alert("a1画像を選択してください。");
+        return;
+    }
+
+    const a2Image = await loadImage(a2File);
+    const zip = new JSZip();
+
+    for (const a1File of a1Files) {
+        const a1Image = await loadImage(a1File);
+        const processedCanvas = await processSingleImage(a1Image, a2Image);
+
+        // CanvasをBlobに変換
+        const blob = await new Promise((resolve) => processedCanvas.toBlob(resolve, "image/png"));
+        zip.file(a1File.name, blob);
+    }
+
+    // ZIPを生成して強制ダウンロード
+    zip.generateAsync({ type: "blob" }).then((blob) => {
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "processed_images.zip";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        alert("処理が完了しました！");
+    });
+});
+
+// 画像をロードする関数
+function loadImage(file) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = (e) => reject(e);
+        img.src = URL.createObjectURL(file);
+    });
+}
+
 // 画像の色調変更とモザイク処理を行う関数
 async function processSingleImage(a1Image, a2Image) {
-    const mosaicSize = 16; // モザイクのサイズ（16x16のブロック）
+    const mosaicSize = 16;
 
-    // a1の画像をCanvasに描画
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
 
@@ -10,7 +57,6 @@ async function processSingleImage(a1Image, a2Image) {
     canvas.height = a1Image.height;
     ctx.drawImage(a1Image, 0, 0);
 
-    // a2の画像をCanvasに描画
     const a2Canvas = document.createElement("canvas");
     const a2Ctx = a2Canvas.getContext("2d");
 
@@ -18,42 +64,33 @@ async function processSingleImage(a1Image, a2Image) {
     a2Canvas.height = a2Image.height;
     a2Ctx.drawImage(a2Image, 0, 0);
 
-    // a1の画像のピクセルデータを取得
     const a1Pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const a2Pixels = a2Ctx.getImageData(0, 0, a2Canvas.width, a2Canvas.height);
 
-    // a1の画像をモザイク風に処理
     for (let y = 0; y < canvas.height; y += mosaicSize) {
         for (let x = 0; x < canvas.width; x += mosaicSize) {
-            // モザイクブロック内の平均色を取得
             const averageColor = getAverageColor(a1Pixels, x, y, mosaicSize, canvas.width);
-            
-            // a2の画像の対応するピクセルを平均色で塗りつぶす
+
             for (let dy = 0; dy < mosaicSize && y + dy < a2Canvas.height; dy++) {
                 for (let dx = 0; dx < mosaicSize && x + dx < a2Canvas.width; dx++) {
                     const idx = ((y + dy) * a2Canvas.width + (x + dx)) * 4;
                     a2Pixels.data[idx] = averageColor.r;
                     a2Pixels.data[idx + 1] = averageColor.g;
                     a2Pixels.data[idx + 2] = averageColor.b;
-                    a2Pixels.data[idx + 3] = 255;  // 不透明
+                    a2Pixels.data[idx + 3] = 255;
                 }
             }
         }
     }
 
-    // 色調変更後のa2画像を新しいCanvasに描画
     a2Ctx.putImageData(a2Pixels, 0, 0);
-
-    // 最終的な画像を返す
     return a2Canvas;
 }
 
-// ピクセルデータから平均色を計算する関数
+// ピクセルデータから平均色を取得する関数
 function getAverageColor(pixels, startX, startY, blockSize, width) {
-    let r = 0, g = 0, b = 0;
-    let count = 0;
+    let r = 0, g = 0, b = 0, count = 0;
 
-    // モザイクブロック内のピクセルを走査
     for (let y = startY; y < startY + blockSize && y < width; y++) {
         for (let x = startX; x < startX + blockSize && x < width; x++) {
             const idx = (y * width + x) * 4;
@@ -64,7 +101,6 @@ function getAverageColor(pixels, startX, startY, blockSize, width) {
         }
     }
 
-    // 平均色を計算
     return {
         r: Math.floor(r / count),
         g: Math.floor(g / count),

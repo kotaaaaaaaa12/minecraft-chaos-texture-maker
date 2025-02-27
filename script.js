@@ -33,16 +33,19 @@ async function processImages(a1Files, a2File) {
         progressText.textContent = `${Math.round(progress)}%`;
     }
 
-    // すべての画像処理が完了したら、ZIPを作成してダウンロードリンクを表示
+    // すべての画像処理が完了したら、ZIPを作成
     const zip = await createZip(processedImages, a1Files);
     const zipBlob = await zip.generateAsync({ type: "blob" });
     const zipUrl = URL.createObjectURL(zipBlob);
 
-    // ダウンロードリンクの表示
-    const downloadLink = document.getElementById("download-link");
+    // アラート表示
+    alert("処理が終了しました！");
+
+    // ダウンロード強制開始
+    const downloadLink = document.createElement("a");
     downloadLink.href = zipUrl;
-    downloadLink.style.display = "inline-block";  // ダウンロードリンクを表示
     downloadLink.download = "processed_images.zip";
+    downloadLink.click(); // 強制的にダウンロードを開始
 }
 
 // 画像を読み込む

@@ -44,13 +44,13 @@ async function processImage(a1Image, a2Image) {
     const a1Ctx = a1Canvas.getContext('2d');
     a1Canvas.width = 64;
     a1Canvas.height = 32;
-    a1Ctx.drawImage(a1Image, 0, 0, 32, 64);
+    a1Ctx.drawImage(a1Image, 0, 0, 64, 32);
     
-    const a1Data = a1Ctx.getImageData(0, 0, 32, 64).data;
+    const a1Data = a1Ctx.getImageData(0, 0, 64, 32).data;
 
-    for (let y = 0; y < 32; y++) {
-        for (let x = 0; x < 64; x++) {
-            const i = (y * 32 + x) * 4;
+    for (let y = 0; y < 64; y++) {
+        for (let x = 0; x < 32; x++) {
+            const i = (y * 64 + x) * 4;
             const r = a1Data[i], g = a1Data[i+1], b = a1Data[i+2], a = a1Data[i+3];
 
             if (a === 0) continue;

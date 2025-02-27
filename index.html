@@ -5,18 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>マイクラカオステクスチャメーカー</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
 </head>
 <body>
     <div class="container">
         <h1>マイクラカオステクスチャメーカー</h1>
 
         <!-- a1画像の選択 -->
-        <label for="a1-images">a1画像（複数選択可）:</label><br>
-        <input type="file" id="a1-images" multiple accept="image/*">
+        <label for="a1-images">a1画像（複数選択可）:</label>
+        <input type="file" id="a1-images" multiple accept="image/*"><br>
 
         <!-- a2画像の選択 -->
-        <label for="a2-image">a2画像（1つのみ選択可）:</label><br>
-        <input type="file" id="a2-image" accept="image/*">
+        <label for="a2-image">a2画像（1つのみ選択可）:</label>
+        <input type="file" id="a2-image" accept="image/*"><br>
 
         <!-- 処理ボタン -->
         <button id="process-button">処理開始</button>

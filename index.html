@@ -5,25 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>マイクラカオステクスチャメーカー</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script defer src="script.js"></script>
 </head>
 <body>
     <h1>マイクラカオステクスチャメーカー</h1>
-
-    <!-- a1画像を複数選択 -->
-    <input type="file" id="a1-images" multiple accept="image/*">
-    <!-- a2画像を1つ選択 -->
-    <input type="file" id="a2-image" accept="image/*">
-
-    <!-- 画像処理ボタン -->
-    <button id="process-button">画像処理を開始</button>
-
-    <!-- 進捗バー -->
-    <div id="progress-container">
-        <progress id="progress-bar" value="0" max="100"></progress>
-        <span id="progress-text">0%</span>
+    <div class="container">
+        <label for="a1">a1（複数選択可）:</label>
+        <input type="file" id="a1" multiple accept="image/png">
+        
+        <label for="a2">a2（1つのみ選択可）:</label>
+        <input type="file" id="a2" accept="image/png">
+        
+        <button id="process">画像処理開始</button>
+        <button id="download" style="display:none;">ダウンロード</button>
     </div>
-
-    <script src="script.js"></script>
 </body>
 </html>

@@ -4,33 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>マイクラカオステクスチャメーカー</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>マイクラカオステクスチャメーカー</h1>
+    <h1>マイクラカオステクスチャメーカー</h1>
 
-        <!-- a1画像の選択 -->
-        <label for="a1-images">a1画像（複数選択可）:</label>
-        <input type="file" id="a1-images" multiple accept="image/*"><br>
+    <!-- a1画像を複数選択 -->
+    <input type="file" id="a1-images" multiple accept="image/*">
+    <!-- a2画像を1つ選択 -->
+    <input type="file" id="a2-image" accept="image/*">
 
-        <!-- a2画像の選択 -->
-        <label for="a2-image">a2画像（1つのみ選択可）:</label>
-        <input type="file" id="a2-image" accept="image/*"><br>
+    <!-- 画像処理ボタン -->
+    <button id="process-button">画像処理を開始</button>
 
-        <!-- 処理ボタン -->
-        <button id="process-button">処理開始</button>
-
-        <!-- 進捗表示 -->
-        <div id="progress-container">
-            <progress id="progress-bar" value="0" max="100"></progress>
-            <span id="progress-text">0%</span>
-        </div>
-
-        <!-- ダウンロードボタン -->
-        <a id="download-link" href="#" style="display: none;">ダウンロード</a>
+    <!-- 進捗バー -->
+    <div id="progress-container">
+        <progress id="progress-bar" value="0" max="100"></progress>
+        <span id="progress-text">0%</span>
     </div>
+
+    <!-- ダウンロードリンク（非表示） -->
+    <a id="download-link" href="#" style="display:none;">Download ZIP</a>
 
     <script src="script.js"></script>
 </body>

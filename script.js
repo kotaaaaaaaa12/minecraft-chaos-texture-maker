@@ -1,5 +1,50 @@
-// ファイル選択のイベントを処理
-document.getElementById("process-button").addEventListener("click", () => {
+// 画像の色調変更を処理する関数
+async function processSingleImage(a1Image, a2Image) {
+    // a1の画像をCanvasに描画
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = a1Image.width;
+    canvas.height = a1Image.height;
+    ctx.drawImage(a1Image, 0, 0);
+
+    // a2の画像をCanvasに描画
+    const a2Canvas = document.createElement("canvas");
+    const a2Ctx = a2Canvas.getContext("2d");
+
+    a2Canvas.width = a2Image.width;
+    a2Canvas.height = a2Image.height;
+    a2Ctx.drawImage(a2Image, 0, 0);
+
+    // a1の画像のピクセルデータを取得
+    const a1Pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const a2Pixels = a2Ctx.getImageData(0, 0, a2Canvas.width, a2Canvas.height);
+
+    // 色調変更の処理 (a1の色をa2の画像に適用)
+    for (let i = 0; i < a1Pixels.data.length; i += 4) {
+        const r = a1Pixels.data[i];     // Red
+        const g = a1Pixels.data[i + 1]; // Green
+        const b = a1Pixels.data[i + 2]; // Blue
+
+        // a2のピクセルデータに色調を適用
+        a2Pixels.data[i] = r;
+        a2Pixels.data[i + 1] = g;
+        a2Pixels.data[i + 2] = b;
+        a2Pixels.data[i + 3] = 255;  // Alpha (不透明)
+    }
+
+    // 色調変更後のa2画像を新しいCanvasに描画
+    a2Ctx.putImageData(a2Pixels, 0, 0);
+
+    // 新しく色調を変更した画像を返す
+    const newImage = new Image();
+    newImage.src = a2Canvas.toDataURL(); // 新しい画像のDataURLを返す
+    await newImage.decode();  // 画像が読み込まれるのを待つ
+    return newImage;
+}
+
+// 画像処理を実行する関数
+async function processImages() {
     const a1Files = document.getElementById("a1-images").files;
     const a2File = document.getElementById("a2-image").files[0];
 
@@ -8,83 +53,53 @@ document.getElementById("process-button").addEventListener("click", () => {
         return;
     }
 
-    processImages(a1Files, a2File);
-});
+    const a2Image = await loadImage(a2File);
+    const zip = new JSZip();
+    let progress = 0;
 
-// 画像処理を開始
-async function processImages(a1Files, a2File) {
+    // 進捗バーの初期化
     const progressBar = document.getElementById("progress-bar");
     const progressText = document.getElementById("progress-text");
-    let processedImages = [];
 
-    // a2画像の読み込み
-    const a2Image = await loadImage(a2File);
-
-    // 各a1画像を処理
     for (let i = 0; i < a1Files.length; i++) {
-        const a1Image = await loadImage(a1Files[i]);
+        const a1File = a1Files[i];
+        const a1Image = await loadImage(a1File);
+
+        // a1の画像を処理してa2の画像に色調変更を適用
         const processedImage = await processSingleImage(a1Image, a2Image);
 
-        processedImages.push(processedImage);
+        // 画像をZIPに追加
+        const imgData = processedImage.src.split(",")[1];
+        zip.file(a1File.name, imgData, { base64: true });
 
-        // 進捗更新
-        const progress = ((i + 1) / a1Files.length) * 100;
+        progress = Math.floor(((i + 1) / a1Files.length) * 100);
         progressBar.value = progress;
-        progressText.textContent = `${Math.round(progress)}%`;
+        progressText.textContent = `${progress}%`;
     }
 
-    // すべての画像処理が完了したら、ZIPを作成
-    const zip = new JSZip();
-    const zipBlob = await createZip(zip, processedImages, a1Files);
-
-    // ZIPのBlob URLを作成
-    const zipUrl = URL.createObjectURL(zipBlob);
-
-    // アラート表示
-    alert("処理が終了しました！");
-
-    // ダウンロード強制開始
+    // ダウンロードリンクを作成して強制的にダウンロード
+    const content = await zip.generateAsync({ type: "blob" });
     const downloadLink = document.createElement("a");
-    downloadLink.href = zipUrl;
+    downloadLink.href = URL.createObjectURL(content);
     downloadLink.download = "processed_images.zip";
-    downloadLink.click(); // 強制的にダウンロードを開始
+    downloadLink.click();  // ダウンロードを強制的に開始
+
+    // 処理完了のアラート
+    alert("処理が完了しました！");
+
+    // ダウンロードリンクを非表示に
+    downloadLink.style.display = "none";
 }
 
-// 画像を読み込む
+// 画像を読み込む関数
 function loadImage(file) {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => resolve(img);
-        img.onerror = (err) => reject(err);
+        img.onerror = reject;
         img.src = URL.createObjectURL(file);
     });
 }
 
-// 1枚の画像を処理
-async function processSingleImage(a1Image, a2Image) {
-    // ここでa1の色調に基づいてa2を変換する処理を実装する
-    // 現在はa2画像をそのまま返すだけにしている
-    return a2Image;
-}
-
-// ZIPファイルを作成
-async function createZip(zip, processedImages, a1Files) {
-    for (let i = 0; i < processedImages.length; i++) {
-        const processedImage = processedImages[i];
-
-        // 画像をCanvasに描画してBase64エンコードされたデータを取得
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        canvas.width = processedImage.width;
-        canvas.height = processedImage.height;
-        ctx.drawImage(processedImage, 0, 0);
-
-        const base64Data = canvas.toDataURL("image/png");
-
-        // a1のファイル名を使用して保存
-        const fileName = a1Files[i].name;
-        zip.file(fileName, base64Data.split(',')[1], { base64: true });
-    }
-
-    return await zip.generateAsync({ type: "blob" });
-}
+// 画像処理ボタンのクリックイベント
+document.getElementById("process-button").addEventListener("click", processImages);

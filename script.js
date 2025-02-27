@@ -38,9 +38,10 @@ async function processImages(a1Files, a2File) {
     const zipBlob = await zip.generateAsync({ type: "blob" });
     const zipUrl = URL.createObjectURL(zipBlob);
 
+    // ダウンロードリンクの表示
     const downloadLink = document.getElementById("download-link");
     downloadLink.href = zipUrl;
-    downloadLink.style.display = "inline-block";
+    downloadLink.style.display = "inline-block";  // ボタンを表示
     downloadLink.download = "processed_images.zip";
 }
 
@@ -57,7 +58,7 @@ function loadImage(file) {
 // 1枚の画像を処理
 async function processSingleImage(a1Image, a2Image) {
     // ここでa1の色調に基づいてa2を変換する処理を実装する
-    // ただし、ここでは仮でa2画像をそのまま返す
+    // 現在はa2画像をそのまま返すだけにしている
     return a2Image;
 }
 

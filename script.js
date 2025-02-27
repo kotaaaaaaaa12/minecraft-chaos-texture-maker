@@ -41,7 +41,7 @@ async function processImages(a1Files, a2File) {
     // ダウンロードリンクの表示
     const downloadLink = document.getElementById("download-link");
     downloadLink.href = zipUrl;
-    downloadLink.style.display = "inline-block";  // ボタンを表示
+    downloadLink.style.display = "inline-block";  // ダウンロードリンクを表示
     downloadLink.download = "processed_images.zip";
 }
 

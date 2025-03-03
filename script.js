@@ -3,14 +3,15 @@ document.getElementById('process').addEventListener('click', async () => {
     const a2File = document.getElementById('a2').files[0];
     const width = parseInt(document.getElementById('width').value);
     const height = parseInt(document.getElementById('height').value);
+    const a2Size = parseInt(document.getElementById('a2size').value);
     
     if (!a1Files.length || !a2File) {
         alert("a1とa2の画像を選択してください");
         return;
     }
 
-    if (width <= 0 || height <= 0) {
-        alert("有効な幅と高さを入力してください");
+    if (width <= 0 || height <= 0 || a2Size <= 0) {
+        alert("有効な数値を入力してください");
         return;
     }
 
@@ -19,7 +20,7 @@ document.getElementById('process').addEventListener('click', async () => {
 
     for (const file of a1Files) {
         const a1Image = await loadImage(file);
-        const resultImage = await processImage(a1Image, a2Image, width, height);
+        const resultImage = await processImage(a1Image, a2Image, width, height, a2Size);
         zip.file(file.name, resultImage, { base64: true });
     }
 
@@ -40,12 +41,12 @@ async function loadImage(file) {
     });
 }
 
-async function processImage(a1Image, a2Image, width, height) {
+async function processImage(a1Image, a2Image, width, height, a2Size) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
-    canvas.width = width * 64;
-    canvas.height = height * 64;
+    canvas.width = width * a2Size;
+    canvas.height = height * a2Size;
 
     const a1Canvas = document.createElement('canvas');
     const a1Ctx = a1Canvas.getContext('2d');
@@ -64,11 +65,11 @@ async function processImage(a1Image, a2Image, width, height) {
 
             const a2Canvas = document.createElement('canvas');
             const a2Ctx = a2Canvas.getContext('2d');
-            a2Canvas.width = 64;
-            a2Canvas.height = 64;
-            a2Ctx.drawImage(a2Image, 0, 0, 64, 64);
+            a2Canvas.width = a2Size;
+            a2Canvas.height = a2Size;
+            a2Ctx.drawImage(a2Image, 0, 0, a2Size, a2Size);
 
-            const a2Data = a2Ctx.getImageData(0, 0, 64, 64);
+            const a2Data = a2Ctx.getImageData(0, 0, a2Size, a2Size);
 
             for (let j = 0; j < a2Data.data.length; j += 4) {
                 a2Data.data[j] = (a2Data.data[j] * r) / 255;
@@ -77,7 +78,7 @@ async function processImage(a1Image, a2Image, width, height) {
             }
 
             a2Ctx.putImageData(a2Data, 0, 0);
-            ctx.drawImage(a2Canvas, x * 64, y * 64);
+            ctx.drawImage(a2Canvas, x * a2Size, y * a2Size);
         }
     }
 
